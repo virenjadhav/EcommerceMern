@@ -1,0 +1,100 @@
+const mongoose = require("mongoose");
+// const request = require("supertest");
+// const app = require("../src/app");
+const path = require("path");
+const axios = require("axios");
+
+// Load test environment variables
+require("dotenv").config({ path: path.resolve(__dirname, "../.env.test") });
+const BASE_URL = process.env.BACKEND_URL || "http://localhost:5000";
+
+// Connect to MongoDB
+beforeAll(async () => {
+  try {
+    await mongoose.connect(process.env.TEST_DB_URI);
+    console.log("MongoDB connected successfully!");
+    const collections = mongoose.connection.collections;
+    // create users_test collection if not exist
+    if (!collections.users_test) {
+      await mongoose.connection.createCollection("users_test");
+      console.log("Create users_test collection!");
+    }
+  } catch (err) {
+    console.error("MongoDB connection error:", err);
+    process.exit(1);
+  }
+});
+
+// Close connection
+afterAll(async () => {
+  await mongoose.connection.close();
+  console.log("MongoDB connection closed.");
+});
+
+// Safe collection cleanup
+afterEach(async () => {
+  const collections = mongoose.connection.collections;
+
+  // Only try to delete collections that exist
+  if (collections.users_test) {
+    await collections.users_test.deleteMany({});
+  }
+
+  // Alternative: Delete all test collections safely
+  /* 
+  for (const key in collections) {
+    if (collections[key].collectionName.endsWith('_test')) {
+      await collections[key].deleteMany({});
+    }
+  }
+  */
+});
+
+// Define schema and model
+// const userSchema = new mongoose.Schema({
+//     email: { type: String, required: true, unique: true },
+//     password: { type: String, required: true }
+//   }, { collection: 'users_test' }); // Explicit collection name
+
+//   const User = mongoose.model('User', userSchema);
+
+//   // Usage in tests
+//   await User.create({ email: "test@example.com", password: "123456" });
+// const User = require('../models/User');
+
+// test("POST /signup - creates user", async () => {
+//   const testUser = {
+//     email: "test@example.com",
+//     password: "123456"
+//   };
+
+//   // Using Mongoose model
+//   await User.create(testUser);
+
+//   // Verify
+//   const foundUser = await User.findOne({ email: testUser.email });
+//   expect(foundUser.email).toBe(testUser.email);
+// });
+
+test("POST /signup - creates user in test DB", async () => {
+  //   const res = await request(app)
+  //     .post("/auth/signup")
+  //     .send({ email: "test@example.com", password: "123456" });
+  //   console.log("response", res.data);
+  //   expect(res.status).toBe(201);
+
+  // Verify user exists in DB
+  //   const user = await mongoose.connection.db.collection("users").findOne();
+  //   expect(user.email).toBe("test@example.com");
+  //   expect(2 + 2).toBe(4);
+  //   console.log("backend url", process.env.BACKEND_URL);
+  //   const res = await request(process.env.BACKEND_URL).get("/");
+  //   const res = await request(BASE_URL)
+  //     .post("/auth/signup")
+  //     .send({ email: "test@example.com", password: "123456" });
+  //   const res = await request(BASE_URL).get("/");
+
+  const res = await axios.get(process.env.BACKEND_URL);
+
+  console.log("response", res);
+});

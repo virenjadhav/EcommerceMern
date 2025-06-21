@@ -1,0 +1,252 @@
+my-app/
+├── backend/
+│   ├── src/
+│   │   ├── app.js
+│   │   ├── config/
+│   │   │   └── db.js
+│   │   ├── controllers/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   └── server.js
+│   ├── tests/
+│   │   ├── integration/
+│   │   ├── unit/
+│   │   └── setup.js
+│   ├── .env
+│   ├── .env.test
+│   └── package.json
+├── frontend/
+│   ├── src/
+│   ├── tests/
+│   ├── .env.test
+│   └── package.json
+└── package.json
+
+
+
+Backend Setup
+1. Environment Files
+backend/.env
+
+env
+NODE_ENV=development
+DB_URI=mongodb+srv://root:password@cluster.mongodb.net/Ecommerce?retryWrites=true&w=majority
+PORT=5000
+JWT_SECRET=your_jwt_secret_dev
+backend/.env.test
+
+env
+NODE_ENV=test
+TEST_DB_URI=mongodb+srv://root:password@cluster.mongodb.net/Ecommerce_test?retryWrites=true&w=majority
+PORT=5001  # Different port for tests
+JWT_SECRET=your_jwt_secret_test
+2. Database Configuration (backend/src/config/db.js)
+javascript
+const mongoose = require('mongoose');
+
+const connectDB = async () => {
+  const dbUri = process.env.NODE_ENV === 'test' 
+    ? process.env.TEST_DB_URI
+    : process.env.DB_URI;
+
+  try {
+    await mongoose.connect(dbUri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      useCreateIndex: true,
+      useFindAndModify: false
+    });
+    console.log(`Connected to ${process.env.NODE_ENV} database`);
+  } catch (err) {
+    console.error('Database connection error:', err);
+    process.exit(1);
+  }
+};
+
+module.exports = connectDB;
+3. Test Setup (backend/tests/setup.js)
+javascript
+const mongoose = require('mongoose');
+const { createServer } = require('../../src/server');
+
+let testServer;
+
+beforeAll(async () => {
+  // Load test environment
+  process.env.NODE_ENV = 'test';
+  
+  // Start test server
+  testServer = await createServer();
+  
+  // Verify test database
+  console.log('Using test DB:', mongoose.connection.db.databaseName);
+});
+
+afterAll(async () => {
+  // Cleanup database
+  await mongoose.connection.db.dropDatabase();
+  await mongoose.connection.close();
+  await testServer.close();
+});
+
+module.exports = { testServer };
+4. Jest Configuration (backend/package.json)
+json
+{
+  "scripts": {
+    "test": "NODE_ENV=test jest --detectOpenHandles --forceExit",
+    "test:watch": "NODE_ENV=test jest --watch"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": ["./tests/setup.js"],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/frontend/"
+    ]
+  }
+}
+5. Sample Integration Test (backend/tests/integration/auth.test.js)
+javascript
+const request = require('supertest');
+const { testServer } = require('../setup');
+const User = require('../../src/models/User');
+
+describe('Auth API', () => {
+  test('POST /auth/signup - creates user in test DB', async () => {
+    const userData = {
+      email: 'test@example.com',
+      password: 'test123'
+    };
+
+    const response = await request(testServer)
+      .post('/api/v1/auth/signup')
+      .send(userData);
+    
+    expect(response.status).toBe(201);
+    expect(response.body).toHaveProperty('token');
+    
+    // Verify in database
+    const dbUser = await User.findOne({ email: userData.email });
+    expect(dbUser).toBeTruthy();
+    expect(dbUser.email).toBe(userData.email);
+    expect(dbUser.password).not.toBe(userData.password); // Should be hashed
+  });
+});
+Frontend Setup
+1. Environment Files
+frontend/.env.test
+
+env
+REACT_APP_API_URL=http://localhost:5001
+REACT_APP_ENV=test
+2. Jest Configuration (frontend/package.json)
+json
+{
+  "scripts": {
+    "test": "react-scripts test --env=jsdom",
+    "test:watch": "react-scripts test --env=jsdom --watchAll"
+  },
+  "jest": {
+    "setupFilesAfterEnv": ["<rootDir>/tests/setupTests.js"],
+    "moduleNameMapper": {
+      "\\.(css|less|scss|sass)$": "identity-obj-proxy"
+    }
+  }
+}
+3. Test Setup (frontend/tests/setupTests.js)
+javascript
+import '@testing-library/jest-dom/extend-expect';
+import axios from 'axios';
+import MockAdapter from 'axios-mock-adapter';
+
+// Create mock adapter
+const mock = new MockAdapter(axios);
+
+// Mock responses
+mock.onPost('/api/v1/auth/signup').reply(201, {
+  user: { email: 'test@example.com' },
+  token: 'fake-jwt-token'
+});
+
+mock.onPost('/api/v1/auth/login').reply(200, {
+  user: { email: 'test@example.com' },
+  token: 'fake-jwt-token'
+});
+4. Sample Component Test (frontend/tests/Auth.test.js)
+javascript
+import React from 'react';
+import { render, fireEvent, waitFor } from '@testing-library/react';
+import axios from 'axios';
+import AuthForm from '../src/components/AuthForm';
+
+test('submits signup form', async () => {
+  const { getByLabelText, getByText } = render(<AuthForm type="signup" />);
+  
+  fireEvent.change(getByLabelText(/email/i), {
+    target: { value: 'test@example.com' }
+  });
+  
+  fireEvent.change(getByLabelText(/password/i), {
+    target: { value: 'test123' }
+  });
+  
+  fireEvent.click(getByText(/sign up/i));
+  
+  await waitFor(() => {
+    expect(axios.post).toHaveBeenCalledWith('/api/v1/auth/signup', {
+      email: 'test@example.com',
+      password: 'test123'
+    });
+  });
+});
+Running Tests
+Backend Tests:
+
+bash
+cd backend
+npm test
+Frontend Tests:
+
+bash
+cd frontend
+npm test
+Key Concepts Explained
+Environment Isolation:
+
+Separate .env files for development and test environments
+
+Different database names (Ecommerce vs Ecommerce_test)
+
+Different ports to avoid conflicts
+
+Database Testing:
+
+Tests use a dedicated test database
+
+Database is cleaned before/after test suites
+
+Verify both API responses and database state
+
+Frontend Mocking:
+
+Mock API calls to test components in isolation
+
+No need for backend to be running during frontend tests
+
+Jest Configuration:
+
+Different setups for backend (Node environment) and frontend (jsdom)
+
+Proper cleanup to avoid memory leaks
+
+Test Types:
+
+Integration tests verify API endpoints with database interaction
+
+Unit tests focus on individual functions/components
+
+End-to-end tests (not shown) would test the complete flow
+
+This setup ensures your tests are reliable, isolated, and maintainable while properly handling environment variables and database connections.
+
