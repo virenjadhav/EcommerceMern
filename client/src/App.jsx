@@ -24,16 +24,16 @@ import ShopAccount from "./pages/Shop/ShopAccount";
 import PaypalReturn from "./pages/Shop/PaypalReturn";
 import PaymentSuccessPage from "./pages/Shop/PaymentSuccessPage";
 import SearchProducts from "./pages/Shop/SearchProducts";
+import AdminProducts from "./pages/Admin/AdminProducts";
+import AdminOrders from "./pages/Admin/AdminOrders";
+import AdminFeatures from "./pages/Admin/AdminFeatures";
 
 const App = () => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   // useEffect
   useEffect(() => {
-    console.log("cehh");
-    dispatch(checkAuth()).then((data) => {
-      console.log("data", data);
-    });
+    dispatch(checkAuth());
   }, [dispatch]);
   return (
     <div style={{ width: "100vw" }}>
@@ -74,6 +74,9 @@ const App = () => {
           }
         >
           <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="products" element={<AdminProducts />} />
+          <Route path="orders" element={<AdminOrders />} />
+          <Route path="features" element={<AdminFeatures />} />
         </Route>
         <Route
           path="/shop"

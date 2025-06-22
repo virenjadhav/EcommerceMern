@@ -1,11 +1,32 @@
+const { imageUploadUtil } = require("../../helpers/cloudinary");
 const TryCatchMiddleware = require("../../middlewares/TryCatchMiddleware");
 const Brand = require("../../models/Brand");
 const Category = require("../../models/Category");
 const Product = require("../../models/Product");
 const AppError = require("../../utils/AppError");
 
+const handleImageUpload = async (req, res) => {
+  try {
+    const b64 = Buffer.from(req.file.buffer).toString("base64");
+    const url = "data:" + req.file.mimetype + ";base64," + b64;
+    const result = await imageUploadUtil(url);
+
+    res.json({
+      success: true,
+      result,
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      success: false,
+      message: "Error occured",
+    });
+  }
+};
+
 const createProduct = TryCatchMiddleware(async (req, res) => {
   const {
+    image,
     name,
     description,
     price,
@@ -30,6 +51,7 @@ const createProduct = TryCatchMiddleware(async (req, res) => {
     throw new AppError("Please Price is cannot be less than Sales Price!!");
   }
   const newProduct = new Product({
+    image,
     name,
     description,
     price,
@@ -66,15 +88,20 @@ const createProduct = TryCatchMiddleware(async (req, res) => {
 
 // fetch all products
 const fetchAllProducts = TryCatchMiddleware(async (req, res) => {
-  const proudcts = await Product.find({})
+  const products = await Product.find({})
     .select("-__v -createdAt -updatedAt")
     .populate("category", "name")
     .populate("brand", "name")
     .lean();
+    const transformedProducts = products.map((product) => ({
+    ...product,
+    category: product.category?.name || null,
+    brand: product.brand?.name || null,
+  }));
   res.status(200).json({
     message: "",
     success: true,
-    data: proudcts,
+    data: transformedProducts,
   });
 });
 
@@ -199,4 +226,5 @@ module.exports = {
   getProduct,
   editProduct,
   deleteProduct,
+  handleImageUpload
 };
