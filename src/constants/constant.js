@@ -1,6 +1,6 @@
 const constant = {
   user: "User",
-  admin: "Admin",
+  admin: "admin",
   priceLowToHigh: "price-lowToHigh",
   priceHighToLow: "price-hightolow",
   titleAtoZ: "title-atoz",

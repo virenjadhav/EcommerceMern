@@ -16,7 +16,7 @@ AuthRouter.post("/signup", signupController);
 AuthRouter.post("/login", loginController);
 
 // logout
-AuthRouter.post("/logout", logoutController);
+AuthRouter.delete("/logout", logoutController);
 
 // check auth
 AuthRouter.get("/checkAuth", authMiddleware, checkAuthController);

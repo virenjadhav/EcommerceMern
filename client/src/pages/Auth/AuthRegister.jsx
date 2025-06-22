@@ -23,7 +23,6 @@ const AuthRegister = () => {
     dispatch(registerUser(formData))
       // .unwrap()
       .then((data) => {
-        console.log("data", data);
         if (data?.payload?.success) {
           navigate("/auth/login");
           toast.success(data.payload?.message);
@@ -36,7 +35,6 @@ const AuthRegister = () => {
     // toast.promise(promise, {
     //   loading: "Registering...",
     //   success: (data) => {
-    //     console.log("datata", data?.payload?.message);
     //     return `${data?.payload?.message}`;
     //   },
     //   error: (error) => {

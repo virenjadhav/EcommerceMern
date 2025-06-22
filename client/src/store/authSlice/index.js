@@ -17,7 +17,7 @@ export const loginUser = createAsyncThunk(
       const response = await axiosService.post("/auth/login", formData);
       return response;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
+      return rejectWithValue(error.response?.message || error.message);
     }
   }
 );
@@ -49,7 +49,7 @@ export const registerUser = createAsyncThunk(
       const response = await axiosService.post("/auth/signup", formData);
       return response;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
+      return rejectWithValue(error.response?.message || error.message);
     }
   }
 );
@@ -62,7 +62,18 @@ export const checkAuth = createAsyncThunk(
       const response = await axiosService.get("/auth/checkAuth");
       return response;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
+      return rejectWithValue(error.response?.message || error.message);
+    }
+  }
+);
+
+export const logoutUser = createAsyncThunk("auth/logout", 
+  async (formData, {rejectWithValue}) => {
+    try{
+      const response = await axiosService.delete("/auth/logout")
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.message || error.message)
     }
   }
 );
@@ -107,7 +118,6 @@ const AuthSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(checkAuth.fulfilled, (state, action) => {
-        console.log("checkAuth", action);
         state.isLoading = false;
         state.isAuthenticated = action.payload?.success;
         state.user = action.payload?.success ? action.payload?.user : null;
@@ -116,7 +126,12 @@ const AuthSlice = createSlice({
         state.isLoading = false;
         state.isAuthenticated = false;
         state.user = null;
-      });
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.isAuthenticated = false;
+        state.isLoading = false;
+        state.user = null;
+      })
   },
 });
 export const { setIsLogged } = AuthSlice.actions;

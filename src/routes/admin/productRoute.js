@@ -5,7 +5,10 @@ const {
   getProduct,
   editProduct,
   deleteProduct,
+  handleImageUpload,
 } = require("../../controllers/admin/ProductController");
+
+const { upload } = require("../../helpers/cloudinary");
 
 const productRouter = express.Router();
 
@@ -23,5 +26,8 @@ productRouter.put("/:id", editProduct);
 
 // delete product
 productRouter.delete("/:id", deleteProduct);
+
+
+productRouter.post("/upload-image", upload.single("my_file"), handleImageUpload);
 
 module.exports = productRouter;
