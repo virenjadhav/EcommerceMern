@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import { Dialog, DialogContent } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { useDispatch, useSelector } from "react-redux";
-import {toast} from "sonner"
+import { toast } from "sonner";
 import { Label } from "../ui/label";
 
 import { useEffect, useState } from "react";
@@ -22,10 +22,7 @@ function ProductDetailsDialog({ open, setOpen, productDetails }) {
   const { cartItems } = useSelector((state) => state.shopCart);
   const { reviews } = useSelector((state) => state.shopReview);
 
-
-
   function handleRatingChange(getRating) {
-
     setRating(getRating);
   }
 
@@ -72,6 +69,7 @@ function ProductDetailsDialog({ open, setOpen, productDetails }) {
   }
 
   function handleAddReview() {
+    console.log("review");
     dispatch(
       addReview({
         productId: productDetails?._id,
@@ -93,7 +91,7 @@ function ProductDetailsDialog({ open, setOpen, productDetails }) {
   }
 
   useEffect(() => {
-    console.log("reveiw", productDetails)
+    console.log("reveiw", productDetails);
     if (productDetails !== null) dispatch(getReviews(productDetails?._id));
   }, [productDetails]);
 
@@ -180,7 +178,10 @@ function ProductDetailsDialog({ open, setOpen, productDetails }) {
                         <h3 className="font-bold">{reviewItem?.userName}</h3>
                       </div>
                       <div className="flex items-center gap-0.5">
-                        <StarRatingComponent key={reviewItem._id} rating={reviewItem?.reviewValue} />
+                        <StarRatingComponent
+                          key={reviewItem._id}
+                          rating={reviewItem?.reviewValue}
+                        />
                       </div>
                       <p className="text-muted-foreground">
                         {reviewItem.reviewMessage}

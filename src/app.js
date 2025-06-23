@@ -8,6 +8,8 @@ const adminMiddleware = require("./middlewares/AdminMiddleware");
 const userMiddleware = require("./middlewares/UserMiddleware");
 
 const cors = require("cors");
+const commonFeatureRouter = require("./routes/CommonFeatureRouter");
+const searchRouter = require("./routes/user/SearchRoute");
 
 const app = express();
 
@@ -46,5 +48,8 @@ app.use("/api/v1/shop", authMiddleware, userMiddleware, userRouter);
 
 // admin routes
 app.use("/api/v1/admin", authMiddleware, adminMiddleware, adminRouter);
+
+app.use("/api/v1/common/feature", commonFeatureRouter);
+app.use("/api/v1/shop/search", searchRouter);
 
 module.exports = app;

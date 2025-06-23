@@ -9,20 +9,14 @@ const searchProducts = async (req, res) => {
         message: "Keyword is required and must be in string format",
       });
     }
-
     const regEx = new RegExp(keyword, "i");
-
     const createSearchQuery = {
-      $or: [
-        { title: regEx },
-        { description: regEx },
-        { category: regEx },
-        { brand: regEx },
-      ],
+      $or: [{ name: regEx }, { description: regEx }],
     };
-
-    const searchResults = await Product.find(createSearchQuery);
-
+    const searchResults = await Product.find(createSearchQuery)
+      .populate("brand", "name")
+      .populate("category", "name")
+      .lean();
     res.status(200).json({
       success: true,
       data: searchResults,
