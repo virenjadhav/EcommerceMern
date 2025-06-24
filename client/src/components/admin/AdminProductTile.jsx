@@ -12,7 +12,6 @@ function AdminProductTile({
     <Card className="w-full max-w-sm mx-auto">
       <div>
         <div className="relative">
-          {console.log("product", product)}
           <img
             src={product?.image}
             alt={product?.name}

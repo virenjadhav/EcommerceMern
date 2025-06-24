@@ -37,11 +37,11 @@ const fetchAllProductsUser = TryCatchMiddleware(async (req, res) => {
       break;
   }
   const allProducts = await Product.find(filters)
-  .sort(sortData)
-  .select("-__v -createdAt -updatedAt")
-  .populate("category", "name description ")
-  .populate("brand", "name description ")
-  .lean();
+    .sort(sortData)
+    .select("-__v -createdAt -updatedAt")
+    .populate("category", "name description ")
+    .populate("brand", "name description ")
+    .lean();
   const transformedProducts = allProducts.map((product) => ({
     ...product,
     category: product.category?.name || null,
@@ -64,12 +64,11 @@ const getProductUser = TryCatchMiddleware(async (req, res) => {
     .populate("category", "name description ")
     .populate("brand", "name description ")
     .lean();
-    const transformedProducts = {
+  const transformedProducts = {
     ...product,
     category: product.category?.name || null,
     brand: product.brand?.name || null,
   };
-  console.log("product", product)
   res.status(200).json({
     success: true,
     message: "",

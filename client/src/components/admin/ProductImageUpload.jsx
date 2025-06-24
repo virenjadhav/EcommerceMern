@@ -18,7 +18,6 @@ function ProductImageUpload({
 }) {
   const inputRef = useRef(null);
 
-
   function handleImageFileChange(event) {
     const selectedFile = event.target.files?.[0];
 
@@ -46,11 +45,11 @@ function ProductImageUpload({
     setImageLoadingState(true);
     const data = new FormData();
     data.append("my_file", imageFile);
-    console.log("upload file")
     const response = await axios.post(
       "http://localhost:5000/api/v1/admin/products/upload-image",
-      data,{
-        withCredentials: true
+      data,
+      {
+        withCredentials: true,
       }
     );
     if (response?.data?.success) {

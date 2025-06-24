@@ -19,7 +19,6 @@ import {
 } from "../ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 
-
 import { useEffect, useState } from "react";
 
 import { Label } from "../ui/label";
@@ -80,8 +79,6 @@ function HeaderRightContent() {
   useEffect(() => {
     // dispatch(fetchCartItems(user?.id));
   }, [dispatch]);
-
-  console.log(cartItems, "sangam");
 
   return (
     <div className="flex lg:items-center lg:flex-row flex-col gap-4">

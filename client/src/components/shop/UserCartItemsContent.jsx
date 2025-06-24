@@ -25,14 +25,12 @@ function UserCartItemsContent({ cartItem }) {
         );
         const getTotalStock = productList[getCurrentProductIndex].totalStock;
 
-
         if (indexOfCurrentCartItem > -1) {
           const getQuantity = getCartItems[indexOfCurrentCartItem].quantity;
           if (getQuantity + 1 > getTotalStock) {
-            toast({
-              title: `Only ${getQuantity} quantity can be added for this item`,
-              variant: "destructive",
-            });
+            toast.error(
+              `Only ${getQuantity} quantity can be added for this item`
+            );
 
             return;
           }
@@ -51,9 +49,7 @@ function UserCartItemsContent({ cartItem }) {
       })
     ).then((data) => {
       if (data?.payload?.success) {
-        toast({
-          title: "Cart item is updated successfully",
-        });
+        toast.success("Cart item is updated successfully");
       }
     });
   }
@@ -63,9 +59,7 @@ function UserCartItemsContent({ cartItem }) {
       deleteCartItem({ userId: user?.id, productId: getCartItem?.productId })
     ).then((data) => {
       if (data?.payload?.success) {
-        toast({
-          title: "Cart item is deleted successfully",
-        });
+        toast.success("Cart item is deleted successfully");
       }
     });
   }

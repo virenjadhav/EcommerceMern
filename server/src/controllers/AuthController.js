@@ -83,7 +83,6 @@ const loginController = TryCatchMiddleware(async (req, res) => {
       expiresIn: "60m",
     }
   );
-  console.log("login successfully");
   res
     .cookie("token", token, {
       httpOnly: true,

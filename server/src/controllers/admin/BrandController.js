@@ -60,7 +60,6 @@ const editBrandController = TryCatchMiddleware(async (req, res) => {
   if (!brand) {
     throw new AppError("Brand is not exist");
   }
-  console.log("name", name === undefined);
   if (name) {
     const extBrand = await Brand.find({ name });
     if (Object.entries(extBrand).length > 0) {
