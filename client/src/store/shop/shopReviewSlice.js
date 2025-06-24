@@ -10,7 +10,6 @@ export const addReview = createAsyncThunk(
   "/order/addReview",
   async (formdata, { rejectWithValue }) => {
     try {
-      console.log("formdat", formdata);
       const response = await axiosService.post("/shop/review/add", formdata);
 
       return response.data;

@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -7,15 +6,17 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {toast } from "sonner"
+import { toast } from "sonner";
 import { sortOptions } from "@/config";
-
 
 import { ArrowUpDownIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "react-router-dom";
-import { fetchAllFilteredProducts, fetchProductDetails } from "@/store/shop/shopProductsSlice";
+import {
+  fetchAllFilteredProducts,
+  fetchProductDetails,
+} from "@/store/shop/shopProductsSlice";
 import { addToCart, fetchCartItems } from "@/store/shop/shopCartSlice";
 import ProductFilter from "@/components/shop/ProductFilter";
 import ShopProductTile from "@/components/shop/shopProductTile";
@@ -29,7 +30,6 @@ function createSearchParamsHelper(filterParams) {
       queryParams.push(`${key}=${encodeURIComponent(paramValue)}`);
     }
   }
-
 
   return queryParams.join("&");
 }
@@ -87,10 +87,9 @@ function ShoppingListing() {
       if (indexOfCurrentItem > -1) {
         const getQuantity = getCartItems[indexOfCurrentItem].quantity;
         if (getQuantity + 1 > getTotalStock) {
-          toast({
-            title: `Only ${getQuantity} quantity can be added for this item`,
-            variant: "destructive",
-          });
+          toast.error(
+            `Only ${getQuantity} quantity can be added for this item`
+          );
 
           return;
         }
@@ -106,9 +105,7 @@ function ShoppingListing() {
     ).then((data) => {
       if (data?.payload?.success) {
         dispatch(fetchCartItems(user?.id));
-        toast({
-          title: "Product is added to cart",
-        });
+        toast.success("Product is added to cart");
       }
     });
   }
@@ -184,11 +181,11 @@ function ShoppingListing() {
             : null}
         </div>
       </div>
-       <ProductDetailsDialog
+      <ProductDetailsDialog
         open={openDetailsDialog}
         setOpen={setOpenDetailsDialog}
         productDetails={productDetails}
-      /> 
+      />
     </div>
   );
 }

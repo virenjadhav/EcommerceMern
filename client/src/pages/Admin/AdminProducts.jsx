@@ -1,15 +1,26 @@
-import AdminProductTile from '@/components/admin/AdminProductTile';
-import ProductImageUpload from '@/components/admin/ProductImageUpload';
-import CommonForm from '@/components/common/CommonForm';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { addProductFormElements } from '@/config';
-import { addNewProduct, deleteProduct, editProduct, fetchAllProducts } from '@/store/admin/adminProductSlice';
-import React from 'react'
-import { useEffect } from 'react';
-import { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { useSelector } from 'react-redux';
+import AdminProductTile from "@/components/admin/AdminProductTile";
+import ProductImageUpload from "@/components/admin/ProductImageUpload";
+import CommonForm from "@/components/common/CommonForm";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { addProductFormElements } from "@/config";
+import {
+  addNewProduct,
+  deleteProduct,
+  editProduct,
+  fetchAllProducts,
+} from "@/store/admin/adminProductSlice";
+import React from "react";
+import { useEffect } from "react";
+import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
+import { toast } from "sonner";
 const initialFormData = {
   image: null,
   name: "",
@@ -20,7 +31,7 @@ const initialFormData = {
   salesPrice: "",
   totalQuantity: "",
   averageReview: 0,
-}
+};
 
 const AdminProducts = () => {
   const [openCreateProductsDialog, setOpenCreateProductsDialog] =
@@ -56,8 +67,6 @@ const AdminProducts = () => {
             formData,
           })
         ).then((data) => {
-          console.log(data, "edit");
-
           if (data?.payload?.success) {
             dispatch(fetchAllProducts());
             setFormData(initialFormData);
@@ -79,6 +88,7 @@ const AdminProducts = () => {
             // toast({
             //   title: "Product add successfully",
             // });
+            toast.success("Product added successfully!");
           }
         });
   }
@@ -141,7 +151,7 @@ const AdminProducts = () => {
         </SheetContent>
       </Sheet>
     </div>
-  )
-}
+  );
+};
 
-export default AdminProducts
+export default AdminProducts;

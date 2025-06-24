@@ -10,7 +10,6 @@ const initialState = {
 export const getSearchResults = createAsyncThunk(
   "/order/getSearchResults",
   async (keyword) => {
-    console.log("about to hit from slice", keyword);
     const response = await axiosService.get(`/shop/search/${keyword}`);
 
     return response.data;
@@ -30,7 +29,6 @@ const shopSearchSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(getSearchResults.fulfilled, (state, action) => {
-        console.log("sera", action.payload);
         state.isLoading = false;
         state.searchResults = action.payload;
       })
