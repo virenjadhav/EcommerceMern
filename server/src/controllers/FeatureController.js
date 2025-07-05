@@ -2,6 +2,12 @@ const Feature = require("../models/Feature");
 const addFeatureImage = async (req, res) => {
   try {
     const { image } = req.body;
+    if (!image) {
+      res.status(500).json({
+        success: false,
+        message: "Image cannot be empty",
+      });
+    }
 
     const featureImages = new Feature({
       image,
@@ -12,6 +18,7 @@ const addFeatureImage = async (req, res) => {
     res.status(201).json({
       success: true,
       data: featureImages,
+      message: "Feature image added successfully!",
     });
   } catch (e) {
     console.log(e);

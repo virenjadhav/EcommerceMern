@@ -1,5 +1,7 @@
+import axiosService from "@/utils/AxiosService";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { createSlice } from "@reduxjs/toolkit";
+import axios from "axios";
 
 const initialState = {
   approvalURL: null,
@@ -13,7 +15,7 @@ export const createNewOrder = createAsyncThunk(
   "/order/createNewOrder",
   async (orderData, { rejectWithValue }) => {
     try {
-      const response = await axios.post("/shop/orders", orderData);
+      const response = await axiosService.post("/shop/orders", orderData);
 
       return response;
     } catch (error) {

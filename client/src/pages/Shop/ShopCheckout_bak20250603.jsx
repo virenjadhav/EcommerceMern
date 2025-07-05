@@ -31,7 +31,7 @@ function ShopCheckout() {
         )
       : 0;
 
-  function handleInitiatePayment() {
+  function handleInitiatePaypalPayment() {
     if (cartItems.length === 0) {
       toast.error("Your cart is empty. Please add items to proceed.");
 
@@ -44,7 +44,9 @@ function ShopCheckout() {
     }
     console.log("cartItems", cartItems);
     const orderData = {
-      items: cartItems.items.map((singleCartItem) => ({
+      userId: user?.id,
+      cartId: cartItems?._id,
+      cartItems: cartItems.items.map((singleCartItem) => ({
         productId: singleCartItem?.productId,
         name: singleCartItem?.name,
         image: singleCartItem?.image,
@@ -54,15 +56,22 @@ function ShopCheckout() {
             : singleCartItem?.price,
         quantity: singleCartItem?.quantity,
       })),
-      shippingAddress: {
+      addressInfo: {
+        addressId: currentSelectedAddress?._id,
         address: currentSelectedAddress?.address,
         city: currentSelectedAddress?.city,
-        postalCode: currentSelectedAddress?.pincode,
-        country: currentSelectedAddress?.country,
+        pincode: currentSelectedAddress?.pincode,
+        phone: currentSelectedAddress?.phone,
+        notes: currentSelectedAddress?.notes,
       },
-      userId: user?.id,
-      taxPrice: 0,
-      shippingPrice: 0,
+      orderStatus: "pending",
+      paymentMethod: "paypal",
+      paymentStatus: "pending",
+      totalAmount: totalCartAmount,
+      orderDate: new Date(),
+      orderUpdateDate: new Date(),
+      paymentId: "",
+      payerId: "",
     };
 
     dispatch(createNewOrder(orderData)).then((data) => {
@@ -102,8 +111,10 @@ function ShopCheckout() {
             </div>
           </div>
           <div className="mt-4 w-full">
-            <Button onClick={handleInitiatePayment} className="w-full">
-              {isPaymentStart ? "Processing  Payment..." : "Make Payment"}
+            <Button onClick={handleInitiatePaypalPayment} className="w-full">
+              {isPaymentStart
+                ? "Processing Paypal Payment..."
+                : "Checkout with Paypal"}
             </Button>
           </div>
         </div>
