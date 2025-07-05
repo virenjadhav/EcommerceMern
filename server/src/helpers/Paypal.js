@@ -15,15 +15,25 @@
 // }
 // module.exports = { client, paypal };
 
-const paypal = require("paypal-rest-sdk");
+// const paypal = require("paypal-rest-sdk");
+// require("dotenv").config();
+// const clientId = process.env.paypalClientId;
+// const clientSecret = process.env.paypalClientSecret;
+
+// paypal.configure({
+//   mode: "sandbox",
+//   client_id: clientId,
+//   client_secret: clientSecret,
+// });
+
+// module.exports = paypal;
+
+const paypal = require("@paypal/checkout-server-sdk");
 require("dotenv").config();
-const clientId = process.env.paypalClientId;
-const clientSecret = process.env.paypalClientSecret;
+const environment = new paypal.core.SandboxEnvironment(
+  process.env.PAYPAL_CLIENT_ID,
+  process.env.PAYPAL_CLIENT_SECRET
+);
+const client = new paypal.core.PayPalHttpClient(environment);
 
-paypal.configure({
-  mode: "sandbox",
-  client_id: clientId,
-  client_secret: clientSecret,
-});
-
-module.exports = paypal;
+module.exports = { client, paypal };

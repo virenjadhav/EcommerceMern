@@ -3,17 +3,16 @@ import { Button } from "../ui/button";
 import { SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 import UserCartItemsContent from "./UserCartItemsContent";
 
-
 function UserCartWrapper({ cartItems, setOpenCartSheet }) {
   const navigate = useNavigate();
-
+  console.log("cartitems", cartItems);
   const totalCartAmount =
     cartItems && cartItems.length > 0
       ? cartItems.reduce(
           (sum, currentItem) =>
             sum +
-            (currentItem?.salePrice > 0
-              ? currentItem?.salePrice
+            (currentItem?.salesPrice > 0
+              ? currentItem?.salesPrice
               : currentItem?.price) *
               currentItem?.quantity,
           0

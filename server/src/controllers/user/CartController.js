@@ -64,7 +64,7 @@ const fetchAllCartItem = async (req, res) => {
 
     const cart = await Cart.findOne({ userId }).populate({
       path: "items.productId",
-      select: "image title price salePrice",
+      select: "image name price salesPrice",
     });
 
     if (!cart) {
@@ -86,9 +86,9 @@ const fetchAllCartItem = async (req, res) => {
     const populateCartItems = validItems.map((item) => ({
       productId: item.productId._id,
       image: item.productId.image,
-      title: item.productId.title,
+      name: item.productId.name,
       price: item.productId.price,
-      salePrice: item.productId.salePrice,
+      salesPrice: item.productId.salesPrice,
       quantity: item.quantity,
     }));
 
@@ -143,15 +143,15 @@ const updateCartItem = async (req, res) => {
 
     await cart.populate({
       path: "items.productId",
-      select: "image title price salePrice",
+      select: "image name price salesPrice",
     });
 
     const populateCartItems = cart.items.map((item) => ({
       productId: item.productId ? item.productId._id : null,
       image: item.productId ? item.productId.image : null,
-      title: item.productId ? item.productId.title : "Product not found",
+      name: item.productId ? item.productId.name : "Product not found",
       price: item.productId ? item.productId.price : null,
-      salePrice: item.productId ? item.productId.salePrice : null,
+      salesPrice: item.productId ? item.productId.salesPrice : null,
       quantity: item.quantity,
     }));
 
@@ -183,7 +183,7 @@ const deleteCartItem = async (req, res) => {
 
     const cart = await Cart.findOne({ userId }).populate({
       path: "items.productId",
-      select: "image title price salePrice",
+      select: "image Name price salesPrice",
     });
 
     if (!cart) {
@@ -201,15 +201,15 @@ const deleteCartItem = async (req, res) => {
 
     await cart.populate({
       path: "items.productId",
-      select: "image title price salePrice",
+      select: "image name price salesPrice",
     });
 
     const populateCartItems = cart.items.map((item) => ({
       productId: item.productId ? item.productId._id : null,
       image: item.productId ? item.productId.image : null,
-      title: item.productId ? item.productId.title : "Product not found",
+      name: item.productId ? item.productId.name : "Product not found",
       price: item.productId ? item.productId.price : null,
-      salePrice: item.productId ? item.productId.salePrice : null,
+      salesPrice: item.productId ? item.productId.salesPrice : null,
       quantity: item.quantity,
     }));
 

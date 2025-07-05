@@ -1,207 +1,350 @@
-const paypal = require("../../helpers/paypal");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const Order = require("../../models/Order");
-const Cart = require("../../models/Cart");
+const User = require("../../models/User");
 const Product = require("../../models/Product");
+const mongoose = require("mongoose");
+const { ObjectId } = mongoose.Types;
 
-const createOrder = async (req, res) => {
+exports.createPaymentIntent = async (req, res) => {
   try {
     const {
+      items,
+      shippingAddress,
       userId,
-      cartItems,
-      addressInfo,
-      orderStatus,
-      paymentMethod,
-      paymentStatus,
-      totalAmount,
-      orderDate,
-      orderUpdateDate,
-      paymentId,
-      payerId,
-      cartId,
+      taxPrice = 0,
+      shippingPrice = 0,
     } = req.body;
 
-    const create_payment_json = {
-      intent: "sale",
-      payer: {
-        payment_method: "paypal",
-      },
-      redirect_urls: {
-        return_url: "http://localhost:5173/shop/paypal-return",
-        cancel_url: "http://localhost:5173/shop/paypal-cancel",
-      },
-      transactions: [
-        {
-          item_list: {
-            items: cartItems.map((item) => ({
-              name: item.title,
-              sku: item.productId,
-              price: item.price.toFixed(2),
-              currency: "USD",
-              quantity: item.quantity,
-            })),
-          },
-          amount: {
-            currency: "USD",
-            total: totalAmount.toFixed(2),
-          },
-          description: "description",
-        },
-      ],
-    };
-
-    paypal.payment.create(create_payment_json, async (error, paymentInfo) => {
-      if (error) {
-        console.log(error);
-
-        return res.status(500).json({
-          success: false,
-          message: "Error while creating paypal payment",
-        });
-      } else {
-        const newlyCreatedOrder = new Order({
-          userId,
-          cartId,
-          cartItems,
-          addressInfo,
-          orderStatus,
-          paymentMethod,
-          paymentStatus,
-          totalAmount,
-          orderDate,
-          orderUpdateDate,
-          paymentId,
-          payerId,
-        });
-
-        await newlyCreatedOrder.save();
-
-        const approvalURL = paymentInfo.links.find(
-          (link) => link.rel === "approval_url"
-        ).href;
-
-        res.status(201).json({
-          success: true,
-          approvalURL,
-          orderId: newlyCreatedOrder._id,
-        });
-      }
-    });
-  } catch (e) {
-    console.log(e);
-    res.status(500).json({
-      success: false,
-      message: "Some error occured!",
-    });
-  }
-};
-
-const capturePayment = async (req, res) => {
-  try {
-    const { paymentId, payerId, orderId } = req.body;
-
-    let order = await Order.findById(orderId);
-
-    if (!order) {
-      return res.status(404).json({
+    if (!items || items.length === 0) {
+      return res.status(400).json({
         success: false,
-        message: "Order can not be found",
+        message: "No items in cart",
+      });
+    }
+    const invalidItems = items.filter(
+      (item) => !mongoose.isValidObjectId(item.productId)
+    );
+    if (invalidItems.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid product IDs: ${invalidItems
+          .map((i) => i.productId)
+          .join(", ")}`,
+      });
+    }
+    if (!mongoose.isValidObjectId(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID",
       });
     }
 
-    order.paymentStatus = "paid";
-    order.orderStatus = "confirmed";
-    order.paymentId = paymentId;
-    order.payerId = payerId;
+    // Verify products exist and get current prices
+    const productIds = items.map((item) =>
+      mongoose.Types.ObjectId(item.productId)
+    );
 
-    for (let item of order.cartItems) {
-      let product = await Product.findById(item.productId);
+    const products = await Product.find({ _id: { $in: productIds } });
+    if (products.length !== items.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Some products not found",
+      });
+    }
 
+    // Calculate total with current prices
+    let itemsPrice = 0;
+    const validatedItems = items.map((item) => {
+      const product = products.find((p) => p._id.toString() === item.productId);
       if (!product) {
-        return res.status(404).json({
-          success: false,
-          message: `Not enough stock for this product ${product.title}`,
-        });
+        throw new Error(`Product ${item.productId} not found`);
       }
+      // Check stock
+      if (product.totalQuantity < item.quantity) {
+        throw new Error(`${product.name} is out of stock`);
+      }
+      const productPrice = product.salesPrice
+        ? product.salesPrice
+        : product.price;
+      const itemTotal = productPrice * item.quantity;
+      itemsPrice += itemTotal;
 
-      product.totalStock -= item.quantity;
-
-      await product.save();
-    }
-
-    const getCartId = order.cartId;
-    await Cart.findByIdAndDelete(getCartId);
-
-    await order.save();
-
+      return {
+        productId: product._id,
+        name: product.name,
+        price: productPrice,
+        quantity: item.quantity,
+        image: product.image,
+      };
+    });
+    const totalAmount = itemsPrice + taxPrice + shippingPrice;
+    // Create payment intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(totalAmount * 100), // Convert to cents
+      currency: "usd",
+      metadata: {
+        userId: userId,
+        itemsCount: items.length.toString(),
+        itemsPrice: itemsPrice.toString(),
+        taxPrice: taxPrice.toString(),
+        shippingPrice: shippingPrice.toString(),
+      },
+    });
     res.status(200).json({
       success: true,
-      message: "Order confirmed",
-      data: order,
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
+      amount: totalAmount,
+      itemsPrice,
+      taxPrice,
+      shippingPrice,
+      items: validatedItems,
     });
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.error("Payment Intent Error:", error);
     res.status(500).json({
       success: false,
-      message: "Some error occured!",
+      message: error.message || "Failed to create payment intent",
     });
   }
 };
 
-const getAllOrdersByUser = async (req, res) => {
+// @desc    Confirm payment and create order
+// @route   POST /api/orders/confirm-payment
+// @access  Private
+exports.confirmPayment = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const {
+      paymentIntentId,
+      items,
+      shippingAddress,
+      userId,
+      itemsPrice,
+      taxPrice = 0,
+      shippingPrice = 0,
+      totalAmount,
+    } = req.body;
 
-    const orders = await Order.find({ userId });
-
-    if (!orders.length) {
-      return res.status(404).json({
+    // Verify payment with Stripe
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    console.log("payment", paymentIntent);
+    if (paymentIntent.status !== "succeeded") {
+      return res.status(400).json({
         success: false,
-        message: "No orders found!",
+        message: "Payment not completed",
       });
     }
 
-    res.status(200).json({
-      success: true,
-      data: orders,
+    // Check if order already exists for this payment intent
+    const existingOrder = await Order.findOne({
+      stripePaymentIntentId: paymentIntentId,
     });
-  } catch (e) {
-    console.log(e);
+    if (existingOrder) {
+      return res.status(400).json({
+        success: false,
+        message: "Order already exists for this payment",
+        order: existingOrder,
+      });
+    }
+
+    // Update product stock
+    for (const item of items) {
+      await Product.findByIdAndUpdate(item.productId, {
+        $inc: { totalQuantity: -item.quantity },
+      });
+    }
+
+    // Create order in database
+    const order = new Order({
+      user: userId,
+      items: items.map((item) => ({
+        product: item.productId,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image,
+      })),
+      shippingAddress,
+      paymentMethod: "stripe",
+      paymentResult: {
+        id: paymentIntent.id,
+        status: paymentIntent.status,
+        update_time: new Date(),
+        email_address: paymentIntent.receipt_email || "",
+      },
+      itemsPrice,
+      taxPrice,
+      shippingPrice,
+      totalPrice: totalAmount,
+      isPaid: true,
+      paidAt: new Date(),
+      orderStatus: "confirmed",
+      stripePaymentIntentId: paymentIntentId,
+    });
+
+    const savedOrder = await order.save();
+
+    // Populate the order for response
+    const populatedOrder = await Order.findById(savedOrder._id)
+      .populate("user", "name email")
+      .populate("items.product", "name image");
+
+    res.status(201).json({
+      success: true,
+      message: "Order created successfully",
+      order: populatedOrder,
+    });
+  } catch (error) {
+    console.error("Order Creation Error:", error);
     res.status(500).json({
       success: false,
-      message: "Some error occured!",
+      message: error.message || "Failed to create order",
     });
   }
 };
 
-const getOrderDetails = async (req, res) => {
+// @desc    Get order by ID
+// @route   GET /api/orders/:id
+// @access  Private
+exports.getOrderById = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const order = await Order.findById(id);
+    const order = await Order.findById(req.params.id)
+      .populate("user", "name email")
+      .populate("items.product", "name image price");
 
     if (!order) {
       return res.status(404).json({
         success: false,
-        message: "Order not found!",
+        message: "Order not found",
+      });
+    }
+
+    // Check if user owns this order or is admin
+    if (
+      order.user._id.toString() !== req.user._id.toString() &&
+      !req.user.isAdmin
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to view this order",
       });
     }
 
     res.status(200).json({
       success: true,
-      data: order,
+      order,
     });
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Some error occured!",
+      message: error.message || "Failed to fetch order",
     });
   }
 };
 
-module.exports = {
-  createOrder,
-  capturePayment,
-  getAllOrdersByUser,
-  getOrderDetails,
+// @desc    Get user orders
+// @route   GET /api/orders/user/:userId
+// @access  Private
+exports.getUserOrders = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status } = req.query;
+    const userId = req.params.userId;
+
+    // Check if user is accessing their own orders or is admin
+    if (userId !== req.user._id.toString() && !req.user.isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to view these orders",
+      });
+    }
+
+    const query = { user: userId };
+    if (status) {
+      query.orderStatus = status;
+    }
+
+    const orders = await Order.find(query)
+      .populate("items.product", "name image price")
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Order.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      orders,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+      total,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch orders",
+    });
+  }
+};
+
+// @desc    Stripe webhook handler
+// @route   POST /api/orders/webhook
+// @access  Public
+exports.stripeWebhook = async (req, res) => {
+  const sig = req.headers["stripe-signature"];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    console.log(`Webhook signature verification failed.`, err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  try {
+    switch (event.type) {
+      case "payment_intent.succeeded":
+        const paymentIntent = event.data.object;
+        console.log("Payment succeeded:", paymentIntent.id);
+
+        await Order.findOneAndUpdate(
+          { stripePaymentIntentId: paymentIntent.id },
+          {
+            isPaid: true,
+            paidAt: new Date(),
+            orderStatus: "confirmed",
+            "paymentResult.status": "succeeded",
+          }
+        );
+        break;
+
+      case "payment_intent.payment_failed":
+        const failedPayment = event.data.object;
+        console.log("Payment failed:", failedPayment.id);
+
+        await Order.findOneAndUpdate(
+          { stripePaymentIntentId: failedPayment.id },
+          {
+            orderStatus: "cancelled",
+            "paymentResult.status": "failed",
+          }
+        );
+        break;
+
+      case "charge.dispute.created":
+        const dispute = event.data.object;
+        console.log("Dispute created:", dispute.id);
+        // Handle dispute logic here
+        break;
+
+      default:
+        console.log(`Unhandled event type ${event.type}`);
+    }
+  } catch (error) {
+    console.error("Webhook handler error:", error);
+    return res.status(500).json({ error: "Webhook handler failed" });
+  }
+
+  res.json({ received: true });
 };

@@ -121,7 +121,7 @@ function ProductDetailsDialog({ open, setOpen, productDetails }) {
             >
               ${productDetails?.price}
             </p>
-            {productDetails?.salePrice > 0 ? (
+            {productDetails?.salesPrice > 0 ? (
               <p className="text-2xl font-bold text-muted-foreground">
                 ${productDetails?.salesPrice}
               </p>

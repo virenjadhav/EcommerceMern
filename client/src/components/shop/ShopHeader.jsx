@@ -24,6 +24,7 @@ import { useEffect, useState } from "react";
 import { Label } from "../ui/label";
 import { logoutUser } from "@/store/authSlice";
 import UserCartWrapper from "./UserCartWrapper";
+import { fetchCartItems } from "@/store/shop/shopCartSlice";
 
 function MenuItems() {
   const navigate = useNavigate();
@@ -77,7 +78,7 @@ function HeaderRightContent() {
   }
 
   useEffect(() => {
-    // dispatch(fetchCartItems(user?.id));
+    dispatch(fetchCartItems(user?.id));
   }, [dispatch]);
 
   return (
