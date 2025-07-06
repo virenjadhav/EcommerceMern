@@ -2,8 +2,17 @@ import React from "react";
 import { useLocation, Navigate } from "react-router-dom";
 
 const CheckAuth = ({ isAuthenticated, user, children }) => {
+  
   const location = useLocation();
   // user on home page after login, redirect him home or dashboard page based on role.
+  console.log("success page", location.pathname)
+  console.log("auth", isAuthenticated)
+  if(location.pathname === "/shop/stripe-payment/success" || location.pathname === "/shop/stripe-payment/error" ){
+    console.log("to call ", location.pathname)
+   
+      return <Navigate to={location.pathname} />
+    
+  }
   if (location.pathname === "/") {
     if (!isAuthenticated) {
       return <Navigate to="/auth/login" />;

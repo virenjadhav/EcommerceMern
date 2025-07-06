@@ -234,9 +234,16 @@ export const addressFormControls = [
     placeholder: "Enter your phone number",
   },
   {
+    label: "Country",
+    name: "country",
+    componentType: "text",
+    placeholder: "Enter your Country"
+  },
+  {
     label: "Notes",
     name: "notes",
     componentType: "textarea",
     placeholder: "Enter any additional notes",
-  },
+  }
+  
 ];

@@ -19,7 +19,7 @@ import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { checkAuth } from "./store/authSlice";
 import ShopListing from "./pages/Shop/ShopListing";
-import ShopCheckout from "./pages/Shop/ShopCheckout_bak20250603";
+import ShopCheckout from "./pages/Shop/ShopCheckout";
 import ShopAccount from "./pages/Shop/ShopAccount";
 import PaypalReturn from "./pages/Shop/PaypalReturn";
 import PaymentSuccessPage from "./pages/Shop/PaymentSuccessPage";
@@ -27,6 +27,8 @@ import SearchProducts from "./pages/Shop/SearchProducts";
 import AdminProducts from "./pages/Admin/AdminProducts";
 import AdminOrders from "./pages/Admin/AdminOrders";
 import AdminFeatures from "./pages/Admin/AdminFeatures";
+import PaymentError from "./pages/Shop/PaymentError";
+
 
 const App = () => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
@@ -93,6 +95,10 @@ const App = () => {
           <Route path="paypal-return" element={<PaypalReturn />} />
           <Route path="payment-success" element={<PaymentSuccessPage />} />
           <Route path="search" element={<SearchProducts />} />
+        </Route>
+        <Route path="/stripe-payment">
+           <Route path="success" element={<PaymentSuccessPage />} />
+          <Route path="error" element={<PaymentError />} />
         </Route>
         <Route
           path="/unauth-page"

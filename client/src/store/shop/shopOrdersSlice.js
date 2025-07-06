@@ -4,18 +4,19 @@ import { createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
 
 const initialState = {
-  approvalURL: null,
+  // approvalURL: null,
   isLoading: false,
-  orderId: null,
+  // orderId: null,
   orderList: [],
   orderDetails: null,
 };
 
-export const createNewOrder = createAsyncThunk(
-  "/order/createNewOrder",
+export const createPaymentIntent = createAsyncThunk(
+  "/order/createPaymentIntent",
   async (orderData, { rejectWithValue }) => {
     try {
-      const response = await axiosService.post("/shop/orders", orderData);
+      // const response = await axiosService.post("shop/orders/create-payment-intent", orderData);
+      const response = await axiosService.post("/shop/orders/create-payment-intent", orderData);
 
       return response;
     } catch (error) {
@@ -24,22 +25,34 @@ export const createNewOrder = createAsyncThunk(
   }
 );
 
-export const capturePayment = createAsyncThunk(
-  "/order/capturePayment",
-  async ({ paymentId, payerId, orderId }, { rejectWithValue }) => {
-    try {
-      const response = await axios.post("/shop/orders/capture", {
-        paymentId,
-        payerId,
-        orderId,
-      });
+// export const capturePayment = createAsyncThunk(
+//   "/order/capturePayment",
+//   async ({ paymentId, payerId, orderId }, { rejectWithValue }) => {
+//     try {
+//       const response = await axios.post("/shop/orders/capture", {
+//         paymentId,
+//         payerId,
+//         orderId,
+//       });
 
+//       return response;
+//     } catch (error) {
+//       return rejectWithValue(error?.response?.message || error.message);
+//     }
+//   }
+//);
+export const createNewORder = createAsyncThunk(
+  "/order/createNewOrder",
+  async (data, {rejectWithValue}) => {
+    try{
+      const response = await axiosService.post("shop/orders/confirm-payment", data);
       return response;
-    } catch (error) {
-      return rejectWithValue(error?.response?.message || error.message);
+    } catch(error){
+      rejectWithValue(error?.response?.message || error.message);
     }
   }
 );
+
 
 export const getAllOrdersByUserId = createAsyncThunk(
   "/order/getAllOrdersByUserId",
@@ -77,22 +90,23 @@ const shopOrderSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(createNewOrder.pending, (state) => {
+      .addCase(createPaymentIntent.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(createNewOrder.fulfilled, (state, action) => {
+      .addCase(createPaymentIntent.fulfilled, (state, action) => {
+        console.log("createNewOrder action payload", action);
         state.isLoading = false;
-        state.approvalURL = action.payload.approvalURL;
-        state.orderId = action.payload.orderId;
-        sessionStorage.setItem(
-          "currentOrderId",
-          JSON.stringify(action.payload.orderId)
-        );
+        // state.approvalURL = action.payload.approvalURL;
+        // state.orderId = action.payload.orderId;
+        // sessionStorage.setItem(
+        //   "currentOrderId",
+        //   JSON.stringify(action.payload.orderId)
+        // );
       })
-      .addCase(createNewOrder.rejected, (state) => {
+      .addCase(createPaymentIntent.rejected, (state) => {
         state.isLoading = false;
-        state.approvalURL = null;
-        state.orderId = null;
+        // state.approvalURL = null;
+        // state.orderId = null;
       })
       .addCase(getAllOrdersByUserId.pending, (state) => {
         state.isLoading = true;
@@ -113,6 +127,17 @@ const shopOrderSlice = createSlice({
         state.orderDetails = action.payload.data;
       })
       .addCase(getOrderDetails.rejected, (state) => {
+        state.isLoading = false;
+        state.orderDetails = null;
+      })
+      .addCase(createNewORder.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(createNewORder.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.orderDetails = action.payload.order;
+      })
+      .addCase(createNewORder.rejected, (state) => {
         state.isLoading = false;
         state.orderDetails = null;
       });

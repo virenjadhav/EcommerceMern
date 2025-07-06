@@ -1,7 +1,7 @@
 const express = require("express");
 const {
   createPaymentIntent,
-  confirmPayment,
+  sendEmailToTest,
 } = require("../../controllers/user/OrderController");
 
 const orderRouter = express.Router();
@@ -22,6 +22,7 @@ const orderRouter = express.Router();
 // router.post("/confirm-payment", confirmPayment);
 // router.get("/user/:userId", getUserOrders);
 orderRouter.post("/create-payment-intent", createPaymentIntent);
-orderRouter.post("/confirm-payment", confirmPayment);
+// orderRouter.post("/confirm-payment", confirmPayment);
+orderRouter.post("/send-email", sendEmailToTest)
 
 module.exports = orderRouter;
